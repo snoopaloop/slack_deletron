@@ -11,7 +11,7 @@ slackApp.auth = function() {
 	var $login = $('.login');
 	$login.on('click', function(e) {
 		e.preventDefault();
-		authWindow = window.open('https://slack.com/oauth/authorize?client_id=' + slackApp.clientId, '', 'left=20,top=20,width=800,height=700,toolbar=0,resizable=1');
+		authWindow = window.open('https://slack.com/oauth/authorize?client_id=' + slackApp.clientId + '&scope=files:write:user,files:read', '', 'left=20,top=20,width=800,height=700,toolbar=0,resizable=1');
 
 		var timer = setInterval(checkChildWindow, 500);
 
@@ -94,30 +94,43 @@ slackApp.displayPersona = function() {
 	$('.fileType').text(selectedFileType);
 	$("#files").on("change", function(){
 			selectedFileType = $('select#files option:selected').data('value');
-	    slackApp.fileType = $(this).val();
+	    		slackApp.fileType = $(this).val();
 			$('.fileType').text(selectedFileType);
 	});
+	$("#age").on("change", function() {
+		age = $("#age").data('value')
+		slackApp.age = $(this).val()
+	})
 	slackApp.deleteClick();
 };
 
 slackApp.deleteClick = function() {
 	$('button.deleteBtn').on('click', function() {
 		slackApp.count = 0;
-		slackApp.fileType = $(this).val();
+		// slackApp.fileType = $(this).val();
 		slackApp.getFiles();
 		// alert('hello');
 	});
 };
 
 slackApp.getFiles = function() {
+
+	get_data = {
+		token: slackApp.token,
+		user: slackApp.userID,
+		types: slackApp.fileType
+	}
+
+	if(slackApp.age > 0) {
+		get_data['to_ts'] = (Date.now() / 1000) - (slackApp.age * 24 * 60 * 60)
+	}
+
+
+
 	$.ajax({
 		url: 'https://slack.com/api/files.list',
 		type: 'GET',
-		data: {
-			token: slackApp.token,
-			user: slackApp.userID,
-			types: slackApp.fileType
-		},
+		data: get_data,
 		success: function(data) {
 			console.log(data.files.length);
 			if (!data.files.length <= 0) {
